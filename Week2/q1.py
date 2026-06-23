@@ -76,31 +76,52 @@ class History:
     def is_win(self):
         # check if the board position is a win for either players
         # Feel free to implement this in anyway if needed
-        pass
+        board = self.board
+        winning_lines = [
+            (0, 1, 2),
+            (3, 4, 5),
+            (6, 7, 8),
+            (0, 3, 6),
+            (1, 4, 7),
+            (2, 5, 8),
+            (0, 4, 8),
+            (2, 4, 6),
+        ]
+        for a, b, c in winning_lines:
+            if board[a] == board[b] == board[c] != '0':
+                return board[a]
+        return False
 
     def is_draw(self):
         # check if the board position is a draw
         # Feel free to implement this in anyway if needed
-        pass
+        return self.is_win() is False and '0' not in self.board
 
     def get_valid_actions(self):
         # get the empty squares from the board
         # Feel free to implement this in anyway if needed
-        pass
+        return [index for index, value in enumerate(self.board) if value == '0']
 
     def is_terminal_history(self):
         # check if the history is a terminal history
         # Feel free to implement this in anyway if needed
-        pass
+        return self.is_win() is not False or self.is_draw()
 
     def get_utility_given_terminal_history(self):
         # Feel free to implement this in anyway if needed
-        pass
+        winner = self.is_win()
+        if winner == 'x':
+            return 1
+        if winner == 'o':
+            return -1
+        return 0
 
     def update_history(self, action):
         # In case you need to create a deepcopy and update the history obj to get the next history object.
         # Feel free to implement this in anyway if needed
-        pass
+        new_history = copy.deepcopy(self.history)
+        new_history.append(action)
+        return History(new_history)
 
 
 def backward_induction(history_obj):
@@ -122,11 +143,47 @@ def backward_induction(history_obj):
     # actions. But since tictactoe is a PIEFG, there always exists an optimal deterministic strategy (SPNE). So your
     # policy will be something like this {"0": 1, "1": 0, "2": 0, "3": 0, "4": 0, "5": 0, "6": 0, "7": 0, "8": 0} where
     # "0" was the one of the best actions for the current player/history.
-    return -2
-    # TODO implement
+    history_key = ''.join([str(action) for action in history_obj.history])
+    if history_obj.is_terminal_history():
+        return history_obj.get_utility_given_terminal_history()
+
+    valid_actions = history_obj.get_valid_actions()
+    current_player = history_obj.player
+
+    if current_player == 'x':
+        best_value = -math.inf
+        best_action = None
+        for action in valid_actions:
+            next_history = history_obj.update_history(action)
+            value = backward_induction(next_history)
+            if value > best_value:
+                best_value = value
+                best_action = action
+    else:
+        best_value = math.inf
+        best_action = None
+        for action in valid_actions:
+            next_history = history_obj.update_history(action)
+            value = backward_induction(next_history)
+            if value < best_value:
+                best_value = value
+                best_action = action
+
+    policy = {str(action): 0.0 for action in range(9)}
+    if best_action is not None:
+        policy[str(best_action)] = 1.0
+
+    if current_player == 'x':
+        strategy_dict_x[history_key] = policy
+    else:
+        strategy_dict_o[history_key] = policy
+
+    return best_value
 
 
 def solve_tictactoe():
+    strategy_dict_x.clear()
+    strategy_dict_o.clear()
     backward_induction(History())
     with open('./policy_x.json', 'w') as f:
         json.dump(strategy_dict_x, f)
