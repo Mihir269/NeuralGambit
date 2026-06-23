@@ -52,7 +52,7 @@ using namespace chess;
 constexpr int INF      = 32000;   // a value larger than any real evaluation
 constexpr int MATE      = 31000;   // score of a checkmate at the root
 constexpr int MAX_PLY   = 128;     // hard ceiling on search depth (array sizes)
-constexpr int MAX_DEPTH = 64;      // deepest iterative-deepening iteration
+constexpr int MAX_DEPTH = 15;      // deepest iterative-deepening iteration
 
 // A score whose absolute value is at least this is a "mate score": it means
 // "mate found, N plies away" rather than a normal centipawn evaluation.
